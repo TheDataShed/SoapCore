@@ -2,7 +2,7 @@ name: Nuget publish
 
 on:
   push:
-    branches: master
+    branches: [master, bugfix/10156-unable-to-consume-wsdl]
     tags:
       - 'v*'
 jobs:
@@ -12,10 +12,17 @@ jobs:
     container:
       image: docker://mcr.microsoft.com/dotnet/sdk:5.0-alpine
     steps:
-   
     - uses: actions/checkout@v1
-    - name: build and publish
+
+    - name: build and pack
       run: |
             dotnet restore src
             dotnet pack --configuration Release --output nupkg src/SoapCore
-            dotnet nuget push nupkg/*.nupkg --api-key ${{ secrets.NUGET_API }} -s https://api.nuget.org/v3/index.json
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: SoapCore
+        path: nupkg/*.nupkg
+
+    - name: publish
+      run: dotnet nuget push nupkg/*.nupkg --api-key ${{ secrets.PUBLISHER_PAT }} -s https://nuget.pkg.github.com/TheDataShed/index.json
